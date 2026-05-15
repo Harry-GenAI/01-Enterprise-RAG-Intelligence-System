@@ -18,6 +18,8 @@ def build_prompt(history, context, question):
     3. Use the Conversation History to maintain context but prioritize the Knowledge Context for facts.
     4. If the context absolutely does not cover the topic at all, state that "you don't have enough information".
     5. Keep your answer professional, concise, and direct.
+    6. Start with the direct answer and mirror the key terms from the User Question.
+       Avoid preambles like "Based on the context" or "According to the provided policy" unless necessary.
 
     Conversation History:
     {history}

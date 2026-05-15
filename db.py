@@ -47,7 +47,7 @@ def save_chat(session_id, user_message, ai_response):
         logger.info(f"chat saved| session={session_id}")
     
     except Exception:
-        logger.exception("DB save failed") #stack trace logged
+        logger.exception("DB save failed")
 
 #get_chat_history
 def get_chat_history(sessionid, limit=5):

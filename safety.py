@@ -26,7 +26,14 @@ def is_safe_input(question: str) -> bool:
 # -----------------------
 # CONTEXT SANITIZATION (protecting sensitive data leakage to the API's)
 # -----------------------
+def has_sensitive_data(text: str) -> bool:
+    t = text.lower()
+    return any(word in t for word in SENSITIVE_DATA)
+
+
 def sanitize_context(text: str) -> str:
-    for word in SENSITIVE_DATA:
-        text = text.replace(word, "[REDACTED]")
+    if has_sensitive_data(text):
+        logger.info("Blocked context because it contains sensitive data")
+        return "Context contains confidential or sensitive data, so it was not shared."
+
     return text

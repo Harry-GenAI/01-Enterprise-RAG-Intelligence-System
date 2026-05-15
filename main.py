@@ -20,7 +20,7 @@ if not os.path.exists("faiss_index/index.faiss"):
 from rag import retrieve_context
 from llmservice import call_llm
 from prompts import build_prompt
-from safety import is_safe_input
+from safety import is_safe_input, sanitize_context
 from query_rewriter import rewrite_query
 
 
@@ -86,7 +86,9 @@ async def chat(req: ChatRequest):
         return {
             "answer": "Request blocked by policy.",
             "session_id": session_id,
-            "sources": []
+            "sources": [],
+            "ci_cd": {"version": "v4 deployed"}
+
         }
 
     # -----------------------------------------------------
@@ -96,15 +98,12 @@ async def chat(req: ChatRequest):
 
     # -----------------------------------------------------
     # Rewrite vague/follow-up questions for better retrieval.
-    # call_llm has a mode toggle in llmservice.py:
-    # - mode="rewrite" uses the lightweight query-rewrite LLM
-    # - mode="answer" uses the stronger final-answer LLM
+    # query_rewriter.py owns the rewrite prompt and LLM mode.
     # -----------------------------------------------------
     rewritten_query = await asyncio.to_thread(
         rewrite_query,
-        lambda prompt: call_llm(prompt, mode="rewrite"),
-        history,
-        user_message
+        user_message,
+        history=history
     )
     logger.info(f"Retrieval query: {rewritten_query}")
 
@@ -122,7 +121,7 @@ async def chat(req: ChatRequest):
     # -----------------------------------------------------
     # Retrieve context from FAISS (non-blocking)
     # -----------------------------------------------------
-    context, sources, _, _ = await asyncio.to_thread(
+    context, sources, _debug_results = await asyncio.to_thread(
         retrieve_context,
         rewritten_query,
         metadata_filter
@@ -131,6 +130,8 @@ async def chat(req: ChatRequest):
     if not context:
         logger.warning("No retrieval context found")
         context = "No company knowledge found."
+    else:
+        context = sanitize_context(context)
 
     # -----------------------------------------------------
     # Build final prompt

@@ -5,6 +5,8 @@ from logger import logger
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 #Bedrock client
 
@@ -16,7 +18,7 @@ bedrock = boto3.client(
 #Create embd function
 #text -> vector
 
-def create_embedding(text:str):
+def create_embedding(text: str):
     
     logger.info("Creating embedding")
 
@@ -32,6 +34,10 @@ def create_embedding(text:str):
     result = json.loads(response["body"].read())
     
     return result["embedding"]
+
+
+def create_embeddings(texts: list[str]):
+    return [create_embedding(text) for text in texts]
 
 #load pdf docs
 def load_documents(folder="docs"):
@@ -90,21 +96,25 @@ def chunk_documents(docs):
 def build_faiss_index(chunks):
     logger.info("generating embeddings and building faiss")
 
-    embeddings = []
-
     texts = [c.page_content for c in chunks]
     metadatas = [c.metadata for c in chunks]
-
-    for text in texts:
-        embeddings.append(create_embedding(text))
+    
+    start_time = time.time()
+    # Using ThreadPoolExecutor to make multiple API calls at the same time
+    # 'max_workers=4' means 4 chunks are being embedded simultaneously
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        # map() handles the looping for you and preserves order
+        embeddings = list(executor.map(create_embedding, texts))
+    
+    end_time = time.time()-start_time
     
     vector_db = FAISS.from_embeddings(
-        list(zip(texts,embeddings)),
+        text_embeddings=list(zip(texts,embeddings)),
         embedding=None,
         metadatas=metadatas
     )
 
-    return vector_db
+    return vector_db, end_time
 
 #MAIN INGESTION PP:
 
@@ -114,14 +124,14 @@ def main():
 
     docs = load_documents()
     chunks = chunk_documents(docs)
-    vector_db = build_faiss_index(chunks)
+    vector_db, latency = build_faiss_index(chunks)
 
     logger.info("saving FAISS index to faiss_index/")
     vector_db.save_local("faiss_index")
 
-    logger.info("Ingestion completed successfully")
-    print("-----------chunks stored-------------")
-    print(chunks)
+    logger.info(f"Ingestion completed successfully with {len(chunks)} chunks and in {latency:.2f} secs")
+    
+    
 
 if __name__ == "__main__":
     main()

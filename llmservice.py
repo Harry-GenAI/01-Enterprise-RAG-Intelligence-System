@@ -1,50 +1,3 @@
-'''import json
-import boto3
-from logger import logger
-
-# Bedrock client
-bedrock = boto3.client(
-    service_name="bedrock-runtime",
-    region_name="us-east-1"
-)
-
-def call_llm(prompt: str, mode: str = "answer"):
-    """
-    mode:
-    - "rewrite" → fast + cheap (Haiku)
-    - "answer"  → smart + reasoning (Sonnet)
-    """
-
-    if mode == "rewrite":
-        model_id = "anthropic.claude-3-haiku-20240307-v1:0"
-        logger.info("Calling Haiku (Query Rewriter)")
-    else:
-        model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
-        logger.info("Calling Claude Sonnet 3.5 (Answer Generation)")
-
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        "max_tokens": 500,
-        "temperature": 0.3
-    }
-
-    response = bedrock.invoke_model(
-        modelId=model_id,
-        body=json.dumps(body),
-        contentType="application/json",
-        accept="application/json"
-    )
-
-    result = json.loads(response["body"].read())
-
-    return result["content"][0]["text"].strip()'''
-
 import json
 import boto3
 from logger import logger
@@ -55,7 +8,7 @@ bedrock = boto3.client(
     region_name="us-east-1"
 )
 
-def call_llm(prompt: str, mode: str = "answer"):
+def call_llm(prompt: str, mode: str = "answer", temperature: float | None = None):
     """
     mode:
     - "rewrite" -> fast + cheap (Haiku)
@@ -76,7 +29,7 @@ def call_llm(prompt: str, mode: str = "answer"):
                 }
             ],
             "max_tokens": 500,
-            "temperature": 0.3
+            "temperature": 0.3 if temperature is None else temperature
         }
     else:
         # Upgrading to Mistral Large 3 for the final answer
@@ -87,7 +40,7 @@ def call_llm(prompt: str, mode: str = "answer"):
         body = {
             "prompt": f"<s>[INST] {prompt} [/INST]",
             "max_tokens": 1000,
-            "temperature": 0.5
+            "temperature": 0.5 if temperature is None else temperature
         }
 
     response = bedrock.invoke_model(

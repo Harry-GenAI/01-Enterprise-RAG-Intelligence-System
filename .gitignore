@@ -20,11 +20,15 @@ llmservice1.py
 
 # Personal notes and local documents
 *.docx
+other/
+debugging/
 
 # Tool/cache folders
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+faiss_index/
+
 
 # OS/editor noise
 .DS_Store
