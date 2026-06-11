@@ -59,4 +59,3 @@ def call_llm(prompt: str, mode: str = "answer", temperature: float | None = None
     else:
         # Claude returns text in 'content'
         return result["content"][0]["text"].strip()
-

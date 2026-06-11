@@ -40,7 +40,7 @@ def create_embd(query: str):
 # Load FAISS
 # ----------------------------
 vector_db = FAISS.load_local(
-    "faiss_index",
+    folder_path="faiss_index",
     embeddings=None,
     allow_dangerous_deserialization=True
 )

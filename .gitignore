@@ -1,5 +1,6 @@
 # Secrets and local environment
 .env
+k8s/secret.yaml
 .venv/
 venv/
 

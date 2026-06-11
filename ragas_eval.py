@@ -1,5 +1,4 @@
 import asyncio
-import re
 
 from dotenv import load_dotenv
 
@@ -9,7 +8,6 @@ load_dotenv()
 from datasets import Dataset
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from ragas import evaluate
-from ragas.run_config import RunConfig
 
 from rag import retrieve_context
 from prompts import build_prompt
@@ -20,7 +18,7 @@ questions = [
     "What is refund processing time?",
     "Can employees misuse company systems?",
     "Are unauthorized downloads allowed for employees?",
-    "Can confidential data be shared?",
+    "What is the policy for confidential data sharing?",
     "How often should passwords be rotated?"
 ]
 
@@ -28,27 +26,16 @@ ground_truths = [
     "Refund processing time is 5-7 business days.",
     "Employees must use company systems responsibly.",
     "Unauthorized downloads are strictly prohibited.",
-    "Confidential data must not be shared externally.",
+    "The policy is that confidential data must not be shared externally.",
     "Passwords must be rotated every 90 days."
 ]
-
-
-def split_context_blocks(context: str) -> list[str]:
-    """Keep RAGAS contexts as separate source blocks instead of one huge string."""
-    blocks = [
-        block.strip()
-        for block in re.split(r"(?=\[SOURCE\s*:)", context)
-        if block.strip()
-    ]
-    return blocks or [context]
-
 
 # Ragas Pipeline
 async def run_ragas():
     answers = []
     contexts = []
 
-    for idx, query in enumerate(questions):
+    for idx, query in enumerate(questions, start=1):
         # get contexts
         context, _, _debug_results = await asyncio.to_thread(retrieve_context, query, None)
 
@@ -60,11 +47,11 @@ async def run_ragas():
 
         # collect generated answers and contexts
         answers.append(answer)
-        contexts.append(split_context_blocks(context))
+        contexts.append([context])
 
         print(f"\n--- Sample {idx} ---")
         print(f"Question: {query}")
-        print(f"Ground truth: {ground_truths[idx]}")
+        print(f"Ground truth: {ground_truths[idx-1]}")
         print(f"Answer: {answer}")
         print(f"Context:\n{context}")
         
@@ -89,12 +76,10 @@ async def run_ragas():
         timeout=60,
         max_retries=5,
     )
-    run_config = RunConfig(timeout=120, max_retries=3, max_workers=2)
     results = evaluate(
         dataset,
         llm=evaluator_llm,
         embeddings=evaluator_embeddings,
-        run_config=run_config,
         raise_exceptions=False,
     )
 
@@ -104,13 +89,14 @@ async def run_ragas():
     print("\nRAGAS Row-level Results:\n")
     row_results = results.to_pandas()
     metric_columns = [
-        "question",
         "answer_relevancy",
         "context_precision",
         "faithfulness",
         "context_recall",
     ]
-    print(row_results[metric_columns].to_string(index=True))
+    metric_results = row_results[metric_columns].round(3)
+    metric_results.index = metric_results.index + 1 #to make dataframe index starts from 1
+    print(metric_results.to_string(index=True))
 
 
 # main

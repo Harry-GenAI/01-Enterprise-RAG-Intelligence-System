@@ -12,7 +12,7 @@ def build_prompt(history, context, question):
     using the Knowledge Context provided below. 
 
     INSTRUCTIONS:
-    1. Use the Knowledge Context as your PRIMARY source.
+    1. Use the Knowledge Context as your PRIMARY source.Do not include extra policy details or any bank related topics/information outside context.stick to the context provided.
     2. If the exact answer isn't in the text, use logical inference based on the policies. 
        (e.g., If context says 'use systems responsibly', you can infer that 'using them in your own way' for non-business tasks is not allowed).
     3. Use the Conversation History to maintain context but prioritize the Knowledge Context for facts.
@@ -20,6 +20,8 @@ def build_prompt(history, context, question):
     5. Keep your answer professional, concise, and direct.
     6. Start with the direct answer and mirror the key terms from the User Question.
        Avoid preambles like "Based on the context" or "According to the provided policy" unless necessary.
+    7. For Yes/No questions, start answering with "Yes" or "No". 
+    
 
     Conversation History:
     {history}

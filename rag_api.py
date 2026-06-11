@@ -12,7 +12,12 @@ def rag_knowledge_api():
 class QueryRequest(BaseModel):
     query : str
 
-@app.post("/rag")
+class ChatResponse(BaseModel):
+    context : str
+    sources : list[str]
+
+
+@app.post("/rag", response_model=ChatResponse)
 def rag_endpoint(request: QueryRequest):
     context, sources, _debug_results = retrieve_context(request.query)
 

@@ -102,7 +102,7 @@ def build_faiss_index(chunks):
     start_time = time.time()
     # Using ThreadPoolExecutor to make multiple API calls at the same time
     # 'max_workers=4' means 4 chunks are being embedded simultaneously
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         # map() handles the looping for you and preserves order
         embeddings = list(executor.map(create_embedding, texts))
     
