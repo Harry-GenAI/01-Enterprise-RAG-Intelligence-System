@@ -1,4 +1,4 @@
-# Enterprise RAG Intelligence System
+# Project-01-Enterprise RAG Intelligence System
 
 Enterprise RAG Intelligence System is a production-style Retrieval-Augmented Generation project for answering company policy, refund, and security questions using private documents. The system combines FAISS retrieval, AWS Bedrock LLM calls, **query rewriting**, **CrossEncoder reranking**, sentence-level context compression, safety guardrails, chat memory, **RAGAS evaluation**, Docker, **GitHub Actions CI/CD**, and Kubernetes deployment assets.
 
